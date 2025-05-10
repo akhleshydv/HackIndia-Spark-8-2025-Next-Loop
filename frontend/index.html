@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DecentVote - Admin Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #45a049;
+            --primary-light: #81c784;
+            --secondary: #0f172a;
+            --secondary-light: #1e293b;
+            --white: #ffffff;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        /* Layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: var(--secondary);
+            color: var(--white);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--secondary-light);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+
+        .menu-item {
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background-color: var(--secondary-light);
+            color: var(--white);
+        }
+
+        .menu-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            color: var(--white);
+        }
+
+        .wallet-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .wallet-info {
+            background-color: var(--white);
+            color: var(--gray-800);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .button {
+            background-color: var(--white);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: var(--gray-100);
+        }
+
+        .button:disabled {
+            background-color: var(--gray-300);
+            cursor: not-allowed;
+        }
+
+        /* Content sections */
+        .content-section {
+            background-color: var(--white);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: var(--gray-800);
+        }
+
+        .section-body {
+            padding: 1.5rem;
+        }
+
+        /* Form styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Message styles */
+        #message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .info {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.orange {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .stat-icon.green {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .stat-icon.red {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .stat-icon.yellow {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .stat-details h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-details p {
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        /* Activity List */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--gray-100);
+            border-radius: 0.5rem;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .activity-details {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .activity-time {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        /* Candidate List */
+        .candidate-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .candidate-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--gray-100);
+            border-radius: 0.5rem;
+        }
+
+        .candidate-info h3 {
+            font-size: 1.125rem;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+        }
+
+        .candidate-info p {
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        .candidate-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Search Box */
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            padding-right: 2.5rem;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+        }
+
+        /* Button Group */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Position List Styles */
+        .position-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .position-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background-color: var(--gray-100);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .position-item:hover {
+            background-color: var(--gray-200);
+        }
+
+        .position-info {
+            flex: 1;
+        }
+
+        .position-info h3 {
+            font-size: 1.25rem;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .position-info p {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .position-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .position-status.active {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .position-status.pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .position-stats {
+            display: flex;
+            gap: 2rem;
+            margin: 0 2rem;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .position-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Election List Styles */
+        .election-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .election-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background-color: var(--gray-100);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .election-item:hover {
+            background-color: var(--gray-200);
+        }
+
+        .election-info {
+            flex: 1;
+        }
+
+        .election-info h3 {
+            font-size: 1.25rem;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .election-date {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .election-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .election-status.active {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .election-status.upcoming {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .election-stats {
+            display: flex;
+            gap: 2rem;
+            margin: 0 2rem;
+        }
+
+        .election-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>DecentVote</h2>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>Candidates</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Results</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>Admin Dashboard</h1>
+                <div class="wallet-section">
+                    <div id="walletInfo" class="wallet-info" style="display: none;"></div>
+                    <button id="connectWallet" class="button">Connect Wallet</button>
+                </div>
+            </div>
+
+            <div id="adminSection" style="display: none;">
+                <!-- Dashboard Cards -->
+                <div class="dashboard-cards">
+                    <div class="card stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 id="totalCandidates">0</h3>
+                            <p>Total Candidates</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-vote-yea"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 id="totalVotes">0</h3>
+                            <p>Total Votes</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon red">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 id="activeVoters">0</h3>
+                            <p>Active Voters</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon yellow">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3 id="timeRemaining">24h</h3>
+                            <p>Time Remaining</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Position List Section -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Positions</h2>
+                        <div class="search-box">
+                            <input type="text" placeholder="Search positions..." class="form-input">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="position-list">
+                            <div class="position-item">
+                                <div class="position-info">
+                                    <h3>President</h3>
+                                    <p>Maximum Candidates: 3</p>
+                                    <p class="position-status active">Active</p>
+                                </div>
+                                <div class="position-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Candidates</span>
+                                        <span class="stat-value">3/3</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Total Votes</span>
+                                        <span class="stat-value">1,234</span>
+                                    </div>
+                                </div>
+                                <div class="position-actions">
+                                    <button class="button">View Details</button>
+                                    <button class="button">Manage</button>
+                                </div>
+                            </div>
+                            <div class="position-item">
+                                <div class="position-info">
+                                    <h3>Vice President</h3>
+                                    <p>Maximum Candidates: 2</p>
+                                    <p class="position-status pending">Pending</p>
+                                </div>
+                                <div class="position-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Candidates</span>
+                                        <span class="stat-value">1/2</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Total Votes</span>
+                                        <span class="stat-value">0</span>
+                                    </div>
+                                </div>
+                                <div class="position-actions">
+                                    <button class="button">View Details</button>
+                                    <button class="button">Manage</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Election List Section -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Elections</h2>
+                        <div class="search-box">
+                            <input type="text" placeholder="Search elections..." class="form-input">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="election-list">
+                            <div class="election-item">
+                                <div class="election-info">
+                                    <h3>Student Council Election 2024</h3>
+                                    <p class="election-date">March 15, 2024 - March 20, 2024</p>
+                                    <p class="election-status active">Active</p>
+                                </div>
+                                <div class="election-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Positions</span>
+                                        <span class="stat-value">5</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Total Votes</span>
+                                        <span class="stat-value">5,678</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Voters</span>
+                                        <span class="stat-value">1,234</span>
+                                    </div>
+                                </div>
+                                <div class="election-actions">
+                                    <button class="button">View Results</button>
+                                    <button class="button">Manage</button>
+                                </div>
+                            </div>
+                            <div class="election-item">
+                                <div class="election-info">
+                                    <h3>Class Representative Election</h3>
+                                    <p class="election-date">April 1, 2024 - April 5, 2024</p>
+                                    <p class="election-status upcoming">Upcoming</p>
+                                </div>
+                                <div class="election-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Positions</span>
+                                        <span class="stat-value">3</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Total Votes</span>
+                                        <span class="stat-value">0</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Voters</span>
+                                        <span class="stat-value">0</span>
+                                    </div>
+                                </div>
+                                <div class="election-actions">
+                                    <button class="button">View Details</button>
+                                    <button class="button">Manage</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Candidate Management Section -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Manage Candidates</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="candidateName" class="form-label">Candidate Name:</label>
+                                <input type="text" id="candidateName" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="candidateDescription" class="form-label">Description:</label>
+                                <input type="text" id="candidateDescription" class="form-input">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button id="addCandidate" class="button">Add Candidate</button>
+                            <button id="deleteCandidate" class="button">Delete Candidate</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Candidate List Section -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Candidate List</h2>
+                        <div class="search-box">
+                            <input type="text" placeholder="Search candidates..." class="form-input">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="candidate-list">
+                            <div class="candidate-item">
+                                
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <script>
+        // Contract ABI
+        const contractABI = [
+            {
+                "inputs": [],
+                "name": "getTotalCandidates",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "string", "name": "name", "type": "string"}],
+                "name": "addCandidate",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "uint256", "name": "candidateId", "type": "uint256"}],
+                "name": "deleteCandidate",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
+        const contractAddress = '0x3c0B0A194Af64D41155761B02B6d799d8882F4Aa';
+        let contract;
+        let signer;
+        let userAddress;
+
+      
+        const connectWalletBtn = document.getElementById('connectWallet');
+        const walletInfo = document.getElementById('walletInfo');
+        const adminSection = document.getElementById('adminSection');
+        const addCandidateBtn = document.getElementById('addCandidate');
+        const deleteCandidateBtn = document.getElementById('deleteCandidate');
+        const messageDiv = document.getElementById('message');
+
+       
+        async function connectWallet() {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    showMessage('Please install MetaMask to use this application', 'error');
+                    return;
+                }
+
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+                
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                
+                walletInfo.textContent = `Connected: ${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
+                walletInfo.style.display = 'block';
+                connectWalletBtn.textContent = 'Wallet Connected';
+                connectWalletBtn.disabled = true;
+                
+                adminSection.style.display = 'block';
+                showMessage('Wallet connected successfully!', 'success');
+
+                await updateDashboardStats();
+            } catch (error) {
+                console.error('Connection error:', error);
+                showMessage('Error connecting wallet: ' + error.message, 'error');
+            }
+        }
+
+        // Add candidate
+        async function addCandidate() {
+            try {
+                if (!contract || !signer) {
+                    showMessage('Please connect your wallet first', 'error');
+                    return;
+                }
+
+                const name = document.getElementById('candidateName').value;
+                
+                if (!name) {
+                    showMessage('Please enter candidate name', 'error');
+                    return;
+                }
+
+                showMessage('Adding candidate...', 'info');
+                
+                const tx = await contract.addCandidate(name, {
+                    gasLimit: 300000
+                });
+
+                showMessage(`Transaction submitted: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                showMessage('Candidate added successfully!', 'success');
+                document.getElementById('candidateName').value = '';
+
+                await updateDashboardStats();
+            } catch (error) {
+                console.error('Error details:', error);
+                showMessage('Error adding candidate: ' + error.message, 'error');
+            }
+        }
+
+        // Delete candidate
+        async function deleteCandidate() {
+            try {
+                if (!contract || !signer) {
+                    showMessage('Please connect your wallet first', 'error');
+                    return;
+                }
+
+                const candidateId = prompt('Enter candidate ID to delete:');
+                if (candidateId === null) return;
+                
+                showMessage('Deleting candidate...', 'info');
+                
+                const tx = await contract.deleteCandidate(candidateId, {
+                    gasLimit: 300000
+                });
+
+                showMessage(`Transaction submitted: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                showMessage('Candidate deleted successfully!', 'success');
+
+                await updateDashboardStats();
+            } catch (error) {
+                console.error('Error details:', error);
+                showMessage('Error deleting candidate: ' + error.message, 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            messageDiv.textContent = message;
+            messageDiv.className = type;
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = '';
+            }, 5000);
+        }
+
+        // Add these functions to update dashboard stats
+        async function updateDashboardStats() {
+            try {
+                if (!contract) return;
+                
+                const totalCandidates = await contract.getTotalCandidates();
+                document.getElementById('totalCandidates').textContent = totalCandidates.toString();
+                
+                // These would need to be implemented in your smart contract
+                // document.getElementById('totalVotes').textContent = await contract.getTotalVotes();
+                // document.getElementById('activeVoters').textContent = await contract.getActiveVoters();
+            } catch (error) {
+                console.error('Error updating dashboard stats:', error);
+            }
+        }
+
+        // Event listeners
+        connectWalletBtn.addEventListener('click', connectWallet);
+        addCandidateBtn.addEventListener('click', addCandidate);
+        deleteCandidateBtn.addEventListener('click', deleteCandidate);
+
+        // Add these new functions for position and election management
+        async function addPosition() {
+            try {
+                if (!contract || !signer) {
+                    showMessage('Please connect your wallet first', 'error');
+                    return;
+                }
+
+                const title = document.getElementById('positionTitle').value;
+                const description = document.getElementById('positionDescription').value;
+                const maxCandidates = document.getElementById('maxCandidates').value;
+                
+                if (!title) {
+                    showMessage('Please enter position title', 'error');
+                    return;
+                }
+
+                showMessage('Adding position...', 'info');
+                
+                // This would need to be implemented in your smart contract
+                // const tx = await contract.addPosition(title, description, maxCandidates);
+                // await tx.wait();
+                
+                showMessage('Position added successfully!', 'success');
+                document.getElementById('positionTitle').value = '';
+                document.getElementById('positionDescription').value = '';
+                document.getElementById('maxCandidates').value = '2';
+            } catch (error) {
+                console.error('Error details:', error);
+                showMessage('Error adding position: ' + error.message, 'error');
+            }
+        }
+
+        async function startElection() {
+            try {
+                if (!contract || !signer) {
+                    showMessage('Please connect your wallet first', 'error');
+                    return;
+                }
+
+                const name = document.getElementById('electionName').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const votingRules = document.getElementById('votingRules').value;
+                
+                if (!name || !startDate || !endDate) {
+                    showMessage('Please fill in all required fields', 'error');
+                    return;
+                }
+
+                showMessage('Starting election...', 'info');
+                
+                // This would need to be implemented in your smart contract
+                // const tx = await contract.startElection(name, startDate, endDate, votingRules);
+                // await tx.wait();
+                
+                showMessage('Election started successfully!', 'success');
+            } catch (error) {
+                console.error('Error details:', error);
+                showMessage('Error starting election: ' + error.message, 'error');
+            }
+        }
+
+        // Add event listeners for new buttons
+        document.getElementById('addPosition').addEventListener('click', addPosition);
+        document.getElementById('startElection').addEventListener('click', startElection);
+    </script>
+</body>
+</html> 
